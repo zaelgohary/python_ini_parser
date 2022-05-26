@@ -1,41 +1,73 @@
-from configparser import ConfigParser
-import json
+class ConfigReader():
+    def __init__(self):
+        self.fileData = dict()
+        
 
-config = ConfigParser()
+    def readFile(self,configFile):
+      fileContents = None
 
-file = 'conf.ini'
-config.read(file)
+      #check if the file exists
+      try:
+          ConfigFile = open(configFile, "r")
+          fileContents = ConfigFile.readlines()
+          ConfigFile.close()
+      except FileNotFoundError:
+          print("Input file not found.")
+          return
+
+      #loop through each line in file
+      for line in fileContents:
+        #check for comment line
+        if line[0]=='#' or line[0]==';':
+            continue
+        #check for new section
+        elif line[0]=='[':
+            index = line.index(']')
+            section = line[1:index]
+            self.fileData[section] = dict()
+        else:
+        #read name:value pair
+            if '=' in line:
+                name, value = line.split('=')
+            elif ':' in line:
+                name, value = line.split(':')
+
+            #add content to current section
+            self.fileData[section][name.strip()] = value.strip()
 
 
-# getting section data
-def get_user_data(section: str = "default"):
-  try:
-    data = config[section]
-  except KeyError:
-    raise KeyError(f"""Invalid section '{section}' specified. Must be one of [{', '.join(config.sections())}]""")
-  return data["username"], data["password"]
+    def displayFile(self):
+      file = self.fileData
+      for section in file:
+          print(str(section) + ' :')
+          for option in file[section]:
+              print(str(option) + ' = ' + file[section][option])
+          print()
 
 
-# def strigify_section(section: str = "default"):
-#   print(config[section])
-#   data = config[section]
-#   result = json.dumps(data)
-#   return result["username"], result["password"]
+    # getting sections after strigfying them
+    def getSections(self):
+      file = self.fileData
+      for section in file:
+          print(str(section), type(str(section)))
 
 
+def main():
+  #create an object of class ConfigReader
+  configFileReader = ConfigReader()
+  
+  #read file name from user
+  #fileName = input("Enter the file name:")
+  fileName = 'conf.ini'
+  
+  #invoke the readFile method
+  configFileReader.readFile(fileName)
+  
+  #display the file contents
+  configFileReader.displayFile()
+  
+  # display sections only
+  configFileReader.getSections()
 
-# Adding new section then updating the ini file 
-config.add_section('account')
-config.set('account', 'status', 'inactive')
-config.set('account', 'username', 'maangchi')
-config.set('account', 'password', 'man234')
-
-with open(file, 'w') as configfile:
-  config.write(configfile)
-
-
-print(config.sections())
-print(config['default'])
-print(get_user_data('account'))
-strigify_section('account')
-
+if __name__ == "__main__":
+  main()
